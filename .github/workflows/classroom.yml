@@ -1,0 +1,50 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Compiles and runs Main.java
+      id: compiles-and-runs-main-java
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: Compiles and runs Main.java
+        setup-command: ''
+        command: javac src/*.java && java -cp src Main
+        input: ''
+        expected-output: |-
+          Starting test for: Volkswagen Passat
+          Final speed is: 0
+        comparison-method: contains
+        timeout: 2
+        max-score: 50
+    - name: Checks accelerate() logic
+      id: checks-accelerate-logic
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: Checks accelerate() logic
+        setup-command: sed -i 's/testCar.brake();/\/\/ testCar.brake();/' src/Main.java
+        command: javac src/*.java && java -cp src Main
+        input: ''
+        expected-output: |-
+          Starting test for: Volkswagen Passat
+          Final speed is: 55
+        comparison-method: contains
+        timeout: 2
+        max-score: 50
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        COMPILES-AND-RUNS-MAIN-JAVA_RESULTS: "${{steps.compiles-and-runs-main-java.outputs.result}}"
+        CHECKS-ACCELERATE-LOGIC_RESULTS: "${{steps.checks-accelerate-logic.outputs.result}}"
+      with:
+        runners: compiles-and-runs-main-java,checks-accelerate-logic
